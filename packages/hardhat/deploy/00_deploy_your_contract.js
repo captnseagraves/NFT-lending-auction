@@ -14,10 +14,10 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   /*
     // Getting a previously deployed contract
-    const YourContract = await ethers.getContract("YourContract", deployer);
-    await YourContract.setPurpose("Hello");
+    const PawnBank = await ethers.getContract("PawnBank", deployer);
+    await PawnBank.setPurpose("Hello");
 
-    //const yourContract = await ethers.getContractAt('YourContract', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A") //<-- if you want to instantiate a version of a contract at a specific address!
+    //const PawnBank = await ethers.getContractAt('PawnBank', "0xaAC799eC2d00C013f1F11c37E654e59B0429DF6A") //<-- if you want to instantiate a version of a contract at a specific address!
   */
 
   /*
@@ -31,7 +31,7 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
 
   /*
   //If you want to send some ETH to a contract on deploy (make your constructor payable!)
-  const yourContract = await deploy("YourContract", [], {
+  const PawnBank = await deploy("PawnBank", [], {
   value: ethers.utils.parseEther("0.05")
   });
   */
@@ -39,9 +39,9 @@ module.exports = async ({ getNamedAccounts, deployments }) => {
   /*
   //If you want to link a library into your contract:
   // reference: https://github.com/austintgriffith/scaffold-eth/blob/using-libraries-example/packages/hardhat/scripts/deploy.js#L19
-  const yourContract = await deploy("YourContract", [], {}, {
+  const PawnBank = await deploy("PawnBank", [], {}, {
    LibraryName: **LibraryAddress**
   });
   */
 };
-module.exports.tags = ["YourContract"];
+module.exports.tags = ["PawnBank"];
