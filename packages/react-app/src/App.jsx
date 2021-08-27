@@ -1,7 +1,7 @@
 import WalletConnectProvider from "@walletconnect/web3-provider";
 //import Torus from "@toruslabs/torus-embed"
 import WalletLink from "walletlink";
-import { Alert, Button, Col, Menu, Row } from "antd";
+import { Alert, Button, Card, Col, Input, List, Menu, Row } from "antd";
 import "antd/dist/antd.css";
 import React, { useCallback, useEffect, useState } from "react";
 import { BrowserRouter, Link, Route, Switch } from "react-router-dom";
@@ -243,6 +243,55 @@ function App(props) {
   console.log("🏷 Resolved austingriffith.eth as:",addressFromENS)
   */
 
+// keep track of a variable from the contract in the local React state:
+const balance = useContractReader(readContracts, "YourCollectible", "balanceOf", [address]);
+console.log("🤗 balance:", balance);
+
+// 📟 Listen for broadcast events
+const transferEvents = useEventListener(readContracts, "YourCollectible", "Transfer", localProvider, 1);
+console.log("📟 Transfer events:", transferEvents);
+
+//
+// 🧠 This effect will update yourCollectibles by polling when your balance changes
+//
+const yourBalance = balance && balance.toNumber && balance.toNumber();
+const [yourCollectibles, setYourCollectibles] = useState();
+
+useEffect(() => {
+  const updateYourCollectibles = async () => {
+    const collectibleUpdate = [];
+    for (let tokenIndex = 0; tokenIndex < balance; tokenIndex++) {
+      try {
+        console.log("GEtting token index", tokenIndex);
+        const tokenId = await readContracts.YourCollectible.tokenOfOwnerByIndex(address, tokenIndex);
+        console.log("tokenId", tokenId);
+        const tokenURI = await readContracts.YourCollectible.tokenURI(tokenId);
+        console.log("tokenURI", tokenURI);
+
+        const ipfsHash = tokenURI.replace("https://ipfs.io/ipfs/", "");
+        console.log("ipfsHash", ipfsHash);
+
+        const jsonManifestBuffer = await getFromIPFS(ipfsHash);
+
+        try {
+          const jsonManifest = JSON.parse(jsonManifestBuffer.toString());
+          console.log("jsonManifest", jsonManifest);
+          collectibleUpdate.push({ id: tokenId, uri: tokenURI, owner: address, ...jsonManifest });
+        } catch (e) {
+          console.log(e);
+        }
+      } catch (e) {
+        console.log(e);
+      }
+    }
+    setYourCollectibles(collectibleUpdate);
+  };
+  updateYourCollectibles();
+}, [address, yourBalance]);
+
+
+
+
   //
   // 🧫 DEBUG 👨🏻‍🔬
   //
@@ -478,6 +527,68 @@ function App(props) {
                 and give you a form to interact with it locally
             */}
 
+            <div style={{ width: 640, margin: "auto", marginTop: 32, paddingBottom: 32 }}>
+
+              <List
+                bordered
+                dataSource={yourCollectibles}
+                renderItem={item => {
+                  const id = item.id.toNumber();
+                  return (
+                    <List.Item key={id + "_" + item.uri + "_" + item.owner}>
+                      <Card
+                        title={
+                          <div>
+                            <span style={{ fontSize: 16, marginRight: 8 }}>#{id}</span> {item.name}
+                          </div>
+                        }
+                      >
+                        <div>
+                          <img src={item.image} style={{ maxWidth: 150 }} />
+                        </div>
+                        <div>{item.description}</div>
+                      </Card>
+
+                      <div>
+                        owner:{" "}
+                        <Address
+                          address={item.owner}
+                          ensProvider={mainnetProvider}
+                          blockExplorer={blockExplorer}
+                          fontSize={16}
+                        />
+                        <AddressInput
+                          ensProvider={mainnetProvider}
+                          placeholder="transfer to address"
+                          value={transferToAddresses[id]}
+                          onChange={newValue => {
+                            const update = {};
+                            update[id] = newValue;
+                            setTransferToAddresses({ ...transferToAddresses, ...update });
+                          }}
+                        />
+                        <Button
+                          onClick={() => {
+                            console.log("writeContracts", writeContracts);
+                            tx(writeContracts.YourCollectible.transferFrom(address, transferToAddresses[id], id));
+                          }}
+                        >
+                          Transfer
+                        </Button>
+                      </div>
+                    </List.Item>
+                  );
+                }}
+              />
+            </div>
+
+            <Contract
+              name="YourCollectible"
+              signer={userSigner}
+              provider={localProvider}
+              address={address}
+              blockExplorer={blockExplorer}
+            />
             <Contract
               name="PawnBank"
               signer={userSigner}
@@ -485,6 +596,7 @@ function App(props) {
               address={address}
               blockExplorer={blockExplorer}
             />
+            
           </Route>
           <Route path="/hints">
             <Hints
