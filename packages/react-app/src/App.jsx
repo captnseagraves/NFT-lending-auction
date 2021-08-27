@@ -479,13 +479,6 @@ function App(props) {
             */}
 
             <Contract
-              name="YourContract"
-              signer={userSigner}
-              provider={localProvider}
-              address={address}
-              blockExplorer={blockExplorer}
-            />
-            <Contract
               name="PawnBank"
               signer={userSigner}
               provider={localProvider}
